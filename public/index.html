@@ -44,7 +44,7 @@
 // 1. ฟังก์ชันดึงข้อมูลและคำนวณ Dashboard
     async function getTransactions() {
         try {
-            const response = await fetch('http://localhost:3000/api/transactions');
+            const response = await fetch('/api/transactions');
             const res = await response.json();
 
             if (res.success) {
@@ -102,7 +102,7 @@
 
         try {
             // ส่งข้อมูลไปหลังบ้าน
-            const response = await fetch('http://localhost:3000/api/transactions', {
+            const response = await fetch('/api/transactions', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
