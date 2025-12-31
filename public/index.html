@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Expense Tracker</title>
+</head>
+<body>
+    <h1>โปรแกรมบันทึกรายรับ-รายจ่าย</h1>
+    <div style="display: flex; gap: 20px; margin-bottom: 20px;">
+        <div style="background-color: #d4edda; padding: 15px; border-radius: 8px;">
+            <h3>รายรับ</h3>
+            <p id="money-plus" style="color: green; font-size: 20px;">+0.00 บาท</p>
+        </div>
+        <div style="background-color: #f8d7da; padding: 15px; border-radius: 8px;">
+            <h3>รายจ่าย</h3>
+            <p id="money-minus" style="color: red; font-size: 20px;">-0.00 บาท</p>
+        </div>
+        <div style="background-color: #cce5ff; padding: 15px; border-radius: 8px;">
+            <h3>คงเหลือสุทธิ</h3>
+            <h2 id="balance">0.00 บาท</h2>
+        </div>
+    </div>
+
+    <div style="margin-bottom: 20px; padding: 10px; border: 1px solid #ccc;">
+        <h3>เพิ่มรายการใหม่</h3>
+        <input type="text" id="text" placeholder="ชื่อรายการ (เช่น ข้าวกะเพรา)">
+        <input type="number" id="amount" placeholder="จำนวนเงิน">
+        
+        <select id="type">
+            <option value="expense">รายจ่าย</option>
+            <option value="income">รายรับ</option>
+        </select>
+
+        <button onclick="addTransaction()">บันทึก</button>
+    </div>
+    <h3>รายการล่าสุด:</h3>
+    
+    <ul id="list">
+        </ul>
+
+
+    <script>
+// 1. ฟังก์ชันดึงข้อมูลและคำนวณ Dashboard
+    async function getTransactions() {
+        try {
+            const response = await fetch('http://localhost:3000/api/transactions');
+            const res = await response.json();
+
+            if (res.success) {
+                const list = document.getElementById('list');
+                list.innerHTML = ''; // ล้างรายการเก่า
+                
+                // เริ่มต้นตัวแปรคำนวณ
+                let income = 0;
+                let expense = 0;
+
+                res.data.forEach(item => {
+                    // --- สร้างรายการลง List ---
+                    const li = document.createElement('li');
+                    const sign = item.type === 'expense' ? '-' : '+';
+                    li.style.color = item.type === 'expense' ? 'red' : 'green';
+                    li.innerText = `${item.text} (${sign}${item.amount} บาท)`;
+                    list.appendChild(li);
+
+                    // --- คำนวณยอด ---
+                    if (item.type === 'income') {
+                        income += item.amount;
+                    } else {
+                        expense += item.amount;
+                    }
+                });
+
+                // --- อัปเดต Dashboard ---
+                // ใช้ .toFixed(2) เพื่อให้มีทศนิยม 2 ตำแหน่งสวยๆ
+                document.getElementById('money-plus').innerText = `+${income.toFixed(2)} บาท`;
+                document.getElementById('money-minus').innerText = `-${expense.toFixed(2)} บาท`;
+                document.getElementById('balance').innerText = `${(income - expense).toFixed(2)} บาท`;
+            }
+        } catch (err) {
+            console.error('Error:', err);
+        }
+    }
+
+    // 2. ฟังก์ชันสำหรับบันทึกข้อมูล (เชื่อมกับปุ่มกด)
+    async function addTransaction() {
+        const text = document.getElementById('text').value;
+        const amount = document.getElementById('amount').value;
+        const type = document.getElementById('type').value;
+
+        // เช็คว่ากรอกครบไหม
+        if (text.trim() === '' || amount.trim() === '') {
+            alert('กรุณากรอกข้อมูลให้ครบถ้วน');
+            return;
+        }
+
+        const transactionData = {
+            text: text,
+            amount: Number(amount),
+            type: type
+        };
+
+        try {
+            // ส่งข้อมูลไปหลังบ้าน
+            const response = await fetch('http://localhost:3000/api/transactions', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(transactionData)
+            });
+
+            const res = await response.json();
+
+            if (res.success) {
+                alert('บันทึกสำเร็จ!');
+                // เคลียร์ช่อง
+                document.getElementById('text').value = '';
+                document.getElementById('amount').value = '';
+                
+                // โหลดข้อมูลใหม่ทันที (ตัวเลขจะอัปเดตตรงนี้)
+                getTransactions(); 
+            }
+        } catch (err) {
+            console.error('Error:', err);
+            alert('เกิดข้อผิดพลาดในการบันทึก');
+        }
+    }
+    
+    // 3. สั่งให้ทำงานทันทีเมื่อเปิดเว็บ
+    getTransactions();
+    </script>()
+</body>
+</html>
