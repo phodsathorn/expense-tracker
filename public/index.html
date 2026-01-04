@@ -5,104 +5,36 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Expense Tracker</title>
     <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;600&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     
     <style>
-        /* --- CSS แต่งสวย --- */
-        body {
-            font-family: 'Kanit', sans-serif;
-            background-color: #f7f7f7; /* พื้นหลังสีเทาอ่อน */
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            margin: 0;
-            color: #333;
-        }
-
-        .container {
-            background-color: #fff;
-            width: 100%;
-            max-width: 400px; /* จำกัดความกว้างให้เหมือนมือถือ */
-            padding: 30px;
-            border-radius: 15px; /* มุมโค้ง */
-            box-shadow: 0 5px 15px rgba(0,0,0,0.1); /* เงาฟุ้งๆ */
-        }
-
-        h1 {
-            text-align: center;
-            margin-bottom: 20px;
-            font-size: 24px;
-        }
-
-        /* กล่องยอดเงิน */
-        .balance-container {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 20px;
-            text-align: center;
-        }
-        
-        .box {
-            flex: 1;
-            padding: 10px;
-            margin: 0 5px;
-            border-radius: 10px;
-            color: #fff;
-        }
-
-        .box-income { background-color: #2ecc71; } /* เขียว */
-        .box-expense { background-color: #e74c3c; } /* แดง */
-        .box-total { background-color: #3498db; }  /* ฟ้า */
-
+        body { font-family: 'Kanit', sans-serif; background-color: #f7f7f7; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; color: #333; }
+        .container { background-color: #fff; width: 100%; max-width: 400px; padding: 30px; border-radius: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); margin: 20px 0; }
+        h1 { text-align: center; margin-bottom: 20px; font-size: 24px; }
+        .balance-container { display: flex; justify-content: space-between; margin-bottom: 20px; text-align: center; }
+        .box { flex: 1; padding: 10px; margin: 0 5px; border-radius: 10px; color: #fff; }
+        .box-income { background-color: #2ecc71; }
+        .box-expense { background-color: #e74c3c; }
+        .box-total { background-color: #3498db; }
         h3 { margin: 0; font-size: 14px; opacity: 0.9; }
         p { margin: 5px 0 0; font-size: 18px; font-weight: bold; }
-
-        /* ฟอร์มกรอกข้อมูล */
-        .form-control {
-            margin-bottom: 10px;
-        }
-        
-        input, select, button {
-            width: 100%;
-            padding: 10px;
-            border: 1px solid #ddd;
-            border-radius: 5px;
-            font-family: 'Kanit', sans-serif;
-            box-sizing: border-box; /* ให้ padding ไม่ดันกล่องขยาย */
-        }
-
-        button {
-            background-color: #9b59b6; /* สีม่วง */
-            color: white;
-            border: none;
-            cursor: pointer;
-            font-weight: bold;
-            margin-top: 10px;
-            transition: 0.3s;
-        }
-
+        .form-control { margin-bottom: 10px; }
+        input, select, button { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px; font-family: 'Kanit', sans-serif; box-sizing: border-box; }
+        button { background-color: #9b59b6; color: white; border: none; cursor: pointer; font-weight: bold; margin-top: 10px; transition: 0.3s; }
         button:hover { background-color: #8e44ad; }
-
-        /* รายการ */
-        ul {
-            list-style-type: none;
-            padding: 0;
-            margin-top: 20px;
-        }
-
-        li {
-            background-color: #fff;
-            border-bottom: 1px solid #eee;
-            padding: 10px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        
+        ul { list-style-type: none; padding: 0; margin-top: 20px; }
+        li { background-color: #fff; border-bottom: 1px solid #eee; padding: 10px; display: flex; justify-content: space-between; align-items: center; }
         li:last-child { border-bottom: none; }
-
         .money-plus { color: #2ecc71; font-weight: bold; }
         .money-minus { color: #e74c3c; font-weight: bold; }
+        
+        /* พื้นที่กราฟ */
+        .chart-container {
+            position: relative; 
+            height: 250px; 
+            width: 100%; 
+            margin-bottom: 20px;
+        }
     </style>
 </head>
 <body>
@@ -125,13 +57,37 @@
             </div>
         </div>
 
+        <div class="chart-container">
+            <canvas id="expenseChart"></canvas>
+        </div>
+
         <div style="border-top: 2px dashed #eee; margin: 20px 0;"></div>
         
+        <div class="form-control">
+            <label>วันที่</label>
+            <input type="date" id="date">
+        </div>
+
         <div class="form-control">
             <label>ชื่อรายการ</label>
             <input type="text" id="text" placeholder="เช่น ค่าข้าว, เงินเดือน...">
         </div>
         
+        <div class="form-control">
+            <label>หมวดหมู่</label>
+            <select id="category">
+                <option value="อาหาร">🍜 อาหาร</option>
+                <option value="เดินทาง">🚗 เดินทาง</option>
+                <option value="ที่พัก">🏠 ที่พัก/น้ำไฟ</option>
+                <option value="ของใช้">🛒 ของใช้ส่วนตัว</option>
+                <option value="บันเทิง">🎬 บันเทิง/เที่ยว</option>
+                <option value="สุขภาพ">💊 ยา/รักษาพยาบาล</option>
+                <option value="เงินเดือน">💰 เงินเดือน</option>
+                <option value="โบนัส">🎁 โบนัส/รายได้เสริม</option>
+                <option value="อื่นๆ">General อื่นๆ</option>
+            </select>
+        </div>
+
         <div class="form-control">
             <label>จำนวนเงิน</label>
             <input type="number" id="amount" placeholder="0">
@@ -146,16 +102,46 @@
 
         <button onclick="addTransaction()">เพิ่มรายการ</button>
 
+        <div style="display: flex; gap: 10px; margin-top: 20px; align-items: center;">
+            <select id="filter-month" onchange="getTransactions()">
+                <option value="">-- ทุกเดือน --</option>
+                <option value="1">มกราคม</option>
+                <option value="2">กุมภาพันธ์</option>
+                <option value="3">มีนาคม</option>
+                <option value="4">เมษายน</option>
+                <option value="5">พฤษภาคม</option>
+                <option value="6">มิถุนายน</option>
+                <option value="7">กรกฎาคม</option>
+                <option value="8">สิงหาคม</option>
+                <option value="9">กันยายน</option>
+                <option value="10">ตุลาคม</option>
+                <option value="11">พฤศจิกายน</option>
+                <option value="12">ธันวาคม</option>
+            </select>
+            <select id="filter-year" onchange="getTransactions()">
+                <option value="2024">2024</option>
+                <option value="2025" selected>2025</option>
+                <option value="2026">2026</option>
+            </select>
+        </div>
+        
         <h3 style="margin-top: 20px; color: #666;">รายการล่าสุด</h3>
-        <ul id="list">
-            </ul>
+        <ul id="list"></ul>
     </div>
 
     <script>
-        // --- 1. ฟังก์ชันดึงข้อมูล (Logic เดิมของคุณ แต่แก้ URL ให้เป็น Relative Path แล้ว) ---
+        // ตัวแปรเก็บกราฟ (เอาไว้ทำลายทิ้งก่อนวาดใหม่)
+        let myChart = null;
+
         async function getTransactions() {
             try {
-                const response = await fetch('/api/transactions');
+                const month = document.getElementById('filter-month').value;
+                const year = document.getElementById('filter-year').value;
+
+                let url = '/api/transactions';
+                if (month) url += `?month=${month}&year=${year}`;
+
+                const response = await fetch(url);
                 const res = await response.json();
 
                 if (res.success) {
@@ -164,39 +150,106 @@
                     
                     let income = 0;
                     let expense = 0;
+                    
+                    // ตัวแปรสำหรับเก็บข้อมูลกราฟ (แยกตามหมวดหมู่)
+                    const categoryTotals = {};
 
                     res.data.forEach(item => {
+                        // 1. สร้างรายการ List
                         const li = document.createElement('li');
-                        // ใส่ class ให้สีสวยๆ
+                        const dateObj = new Date(item.date);
+                        const dateStr = dateObj.toLocaleDateString('th-TH');
                         const sign = item.type === 'expense' ? '-' : '+';
                         const amountClass = item.type === 'expense' ? 'money-minus' : 'money-plus';
 
                         li.innerHTML = `
-                            <span>${item.text}</span>
+                            <span>
+                                <span style="font-size: 0.8em; color: #888;">${dateStr}</span> <br>
+                                ${item.text} <small style="color:#aaa">(${item.category})</small>
+                            </span>
                             <span class="${amountClass}">${sign}${item.amount.toLocaleString()} บาท</span>
                         `;
-                        
                         list.appendChild(li);
 
-                        if (item.type === 'income') income += item.amount;
-                        else expense += item.amount;
+                        // 2. คำนวณยอดรวม
+                        if (item.type === 'income') {
+                            income += item.amount;
+                        } else {
+                            expense += item.amount;
+                            
+                            // 3. เก็บข้อมูลลงถังหมวดหมู่ (เฉพาะรายจ่าย) เพื่อทำกราฟ
+                            if (categoryTotals[item.category]) {
+                                categoryTotals[item.category] += item.amount;
+                            } else {
+                                categoryTotals[item.category] = item.amount;
+                            }
+                        }
                     });
 
-                    // ใช้ toLocaleString() ให้มีลูกน้ำคั่น (เช่น 20,000)
                     document.getElementById('money-plus').innerText = `+${income.toLocaleString()}`;
                     document.getElementById('money-minus').innerText = `-${expense.toLocaleString()}`;
                     document.getElementById('balance').innerText = `${(income - expense).toLocaleString()}`;
+
+                    // 4. เรียกฟังก์ชันวาดกราฟ
+                    renderChart(categoryTotals);
                 }
             } catch (err) {
                 console.error('Error:', err);
             }
         }
 
-        // --- 2. ฟังก์ชันเพิ่มรายการ ---
+        // --- ฟังก์ชันวาดกราฟ (Chart.js) ---
+        function renderChart(dataObj) {
+            const ctx = document.getElementById('expenseChart').getContext('2d');
+            
+            // ถ้ามีกราฟเก่าอยู่ ให้ลบทิ้งก่อน (ไม่งั้นภาพจะซ้อนกัน)
+            if (myChart) {
+                myChart.destroy();
+            }
+
+            // เตรียมข้อมูลกราฟ
+            const labels = Object.keys(dataObj); // ชื่อหมวดหมู่
+            const data = Object.values(dataObj); // ยอดเงิน
+
+            // ถ้าไม่มีรายจ่ายเลย ไม่ต้องวาด
+            if (labels.length === 0) return;
+
+            // สร้างกราฟวงกลมใหม่
+            myChart = new Chart(ctx, {
+                type: 'doughnut', // หรือเปลี่ยนเป็น 'pie', 'bar' ก็ได้
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'ยอดใช้จ่าย (บาท)',
+                        data: data,
+                        backgroundColor: [
+                            '#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF', '#FF9F40', '#E7E9ED', '#71B37C'
+                        ],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        },
+                        title: {
+                            display: true,
+                            text: 'สัดส่วนรายจ่ายแบ่งตามหมวดหมู่'
+                        }
+                    }
+                }
+            });
+        }
+
         async function addTransaction() {
             const text = document.getElementById('text').value;
             const amount = document.getElementById('amount').value;
             const type = document.getElementById('type').value;
+            const date = document.getElementById('date').value;
+            const category = document.getElementById('category').value;
 
             if (text.trim() === '' || amount.trim() === '') {
                 alert('กรุณากรอกข้อมูลให้ครบถ้วน');
@@ -206,7 +259,9 @@
             const transactionData = {
                 text: text,
                 amount: Number(amount),
-                type: type
+                type: type,
+                date: date,
+                category: category
             };
 
             try {
@@ -221,6 +276,7 @@
                 if (res.success) {
                     document.getElementById('text').value = '';
                     document.getElementById('amount').value = '';
+                    // ไม่ต้องเคลียร์วันที่ เพื่อความสะดวกในการกรอกต่อ
                     getTransactions(); 
                 }
             } catch (err) {

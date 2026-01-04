@@ -1,23 +1,32 @@
 const mongoose = require('mongoose');
 
-// สร้าง Schema (โครงสร้างข้อมูล)
 const TransactionSchema = new mongoose.Schema({
     text: {
         type: String,
-        required: [true, 'กรุณาระบุชื่อรายการ']
+        trim: true,
+        required: [true, 'กรุณาใส่ชื่อรายการ']
     },
     amount: {
         type: Number,
-        required: [true, 'กรุณาระบุจำนวนเงิน']
+        required: [true, 'กรุณาใส่จำนวนเงิน']
     },
     type: {
-        type: String,
-        // enum: ['income', 'expense'], // (ไว้ค่อยเปิดใช้ตอนทำ Frontend เสร็จ)
+        type: String, // 'income' หรือ 'expense'
         required: true
+    },
+    // --- ส่วนที่เพิ่มมาใหม่ ---
+    category: {
+        type: String,
+        required: [true, 'กรุณาเลือกหมวดหมู่']
     },
     date: {
         type: Date,
-        default: Date.now // ถ้าไม่ระบุวันที่ ให้ใช้วันปัจจุบันอัตโนมัติ
+        default: Date.now // ถ้าไม่กรอก จะใช้วันปัจจุบัน
+    },
+    // ----------------------
+    createdAt: {
+        type: Date,
+        default: Date.now
     }
 });
 
