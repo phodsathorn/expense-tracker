@@ -1,134 +1,235 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="th">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Expense Tracker</title>
+    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;600&display=swap" rel="stylesheet">
+    
+    <style>
+        /* --- CSS แต่งสวย --- */
+        body {
+            font-family: 'Kanit', sans-serif;
+            background-color: #f7f7f7; /* พื้นหลังสีเทาอ่อน */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            color: #333;
+        }
+
+        .container {
+            background-color: #fff;
+            width: 100%;
+            max-width: 400px; /* จำกัดความกว้างให้เหมือนมือถือ */
+            padding: 30px;
+            border-radius: 15px; /* มุมโค้ง */
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1); /* เงาฟุ้งๆ */
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 20px;
+            font-size: 24px;
+        }
+
+        /* กล่องยอดเงิน */
+        .balance-container {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        
+        .box {
+            flex: 1;
+            padding: 10px;
+            margin: 0 5px;
+            border-radius: 10px;
+            color: #fff;
+        }
+
+        .box-income { background-color: #2ecc71; } /* เขียว */
+        .box-expense { background-color: #e74c3c; } /* แดง */
+        .box-total { background-color: #3498db; }  /* ฟ้า */
+
+        h3 { margin: 0; font-size: 14px; opacity: 0.9; }
+        p { margin: 5px 0 0; font-size: 18px; font-weight: bold; }
+
+        /* ฟอร์มกรอกข้อมูล */
+        .form-control {
+            margin-bottom: 10px;
+        }
+        
+        input, select, button {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-family: 'Kanit', sans-serif;
+            box-sizing: border-box; /* ให้ padding ไม่ดันกล่องขยาย */
+        }
+
+        button {
+            background-color: #9b59b6; /* สีม่วง */
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-weight: bold;
+            margin-top: 10px;
+            transition: 0.3s;
+        }
+
+        button:hover { background-color: #8e44ad; }
+
+        /* รายการ */
+        ul {
+            list-style-type: none;
+            padding: 0;
+            margin-top: 20px;
+        }
+
+        li {
+            background-color: #fff;
+            border-bottom: 1px solid #eee;
+            padding: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        li:last-child { border-bottom: none; }
+
+        .money-plus { color: #2ecc71; font-weight: bold; }
+        .money-minus { color: #e74c3c; font-weight: bold; }
+    </style>
 </head>
 <body>
-    <h1>โปรแกรมบันทึกรายรับ-รายจ่าย</h1>
-    <div style="display: flex; gap: 20px; margin-bottom: 20px;">
-        <div style="background-color: #d4edda; padding: 15px; border-radius: 8px;">
-            <h3>รายรับ</h3>
-            <p id="money-plus" style="color: green; font-size: 20px;">+0.00 บาท</p>
-        </div>
-        <div style="background-color: #f8d7da; padding: 15px; border-radius: 8px;">
-            <h3>รายจ่าย</h3>
-            <p id="money-minus" style="color: red; font-size: 20px;">-0.00 บาท</p>
-        </div>
-        <div style="background-color: #cce5ff; padding: 15px; border-radius: 8px;">
-            <h3>คงเหลือสุทธิ</h3>
-            <h2 id="balance">0.00 บาท</h2>
-        </div>
-    </div>
 
-    <div style="margin-bottom: 20px; padding: 10px; border: 1px solid #ccc;">
-        <h3>เพิ่มรายการใหม่</h3>
-        <input type="text" id="text" placeholder="ชื่อรายการ (เช่น ข้าวกะเพรา)">
-        <input type="number" id="amount" placeholder="จำนวนเงิน">
+    <div class="container">
+        <h1>💰 บัญชีรายรับ-รายจ่าย</h1>
+
+        <div class="balance-container">
+            <div class="box box-income">
+                <h3>รายรับ</h3>
+                <p id="money-plus">+0.00</p>
+            </div>
+            <div class="box box-expense">
+                <h3>รายจ่าย</h3>
+                <p id="money-minus">-0.00</p>
+            </div>
+            <div class="box box-total">
+                <h3>คงเหลือ</h3>
+                <p id="balance">0.00</p>
+            </div>
+        </div>
+
+        <div style="border-top: 2px dashed #eee; margin: 20px 0;"></div>
         
-        <select id="type">
-            <option value="expense">รายจ่าย</option>
-            <option value="income">รายรับ</option>
-        </select>
+        <div class="form-control">
+            <label>ชื่อรายการ</label>
+            <input type="text" id="text" placeholder="เช่น ค่าข้าว, เงินเดือน...">
+        </div>
+        
+        <div class="form-control">
+            <label>จำนวนเงิน</label>
+            <input type="number" id="amount" placeholder="0">
+        </div>
 
-        <button onclick="addTransaction()">บันทึก</button>
+        <div class="form-control">
+            <select id="type">
+                <option value="expense">รายจ่าย (-)</option>
+                <option value="income">รายรับ (+)</option>
+            </select>
+        </div>
+
+        <button onclick="addTransaction()">เพิ่มรายการ</button>
+
+        <h3 style="margin-top: 20px; color: #666;">รายการล่าสุด</h3>
+        <ul id="list">
+            </ul>
     </div>
-    <h3>รายการล่าสุด:</h3>
-    
-    <ul id="list">
-        </ul>
-
 
     <script>
-// 1. ฟังก์ชันดึงข้อมูลและคำนวณ Dashboard
-    async function getTransactions() {
-        try {
-            const response = await fetch('/api/transactions');
-            const res = await response.json();
+        // --- 1. ฟังก์ชันดึงข้อมูล (Logic เดิมของคุณ แต่แก้ URL ให้เป็น Relative Path แล้ว) ---
+        async function getTransactions() {
+            try {
+                const response = await fetch('/api/transactions');
+                const res = await response.json();
 
-            if (res.success) {
-                const list = document.getElementById('list');
-                list.innerHTML = ''; // ล้างรายการเก่า
-                
-                // เริ่มต้นตัวแปรคำนวณ
-                let income = 0;
-                let expense = 0;
+                if (res.success) {
+                    const list = document.getElementById('list');
+                    list.innerHTML = ''; 
+                    
+                    let income = 0;
+                    let expense = 0;
 
-                res.data.forEach(item => {
-                    // --- สร้างรายการลง List ---
-                    const li = document.createElement('li');
-                    const sign = item.type === 'expense' ? '-' : '+';
-                    li.style.color = item.type === 'expense' ? 'red' : 'green';
-                    li.innerText = `${item.text} (${sign}${item.amount} บาท)`;
-                    list.appendChild(li);
+                    res.data.forEach(item => {
+                        const li = document.createElement('li');
+                        // ใส่ class ให้สีสวยๆ
+                        const sign = item.type === 'expense' ? '-' : '+';
+                        const amountClass = item.type === 'expense' ? 'money-minus' : 'money-plus';
 
-                    // --- คำนวณยอด ---
-                    if (item.type === 'income') {
-                        income += item.amount;
-                    } else {
-                        expense += item.amount;
-                    }
+                        li.innerHTML = `
+                            <span>${item.text}</span>
+                            <span class="${amountClass}">${sign}${item.amount.toLocaleString()} บาท</span>
+                        `;
+                        
+                        list.appendChild(li);
+
+                        if (item.type === 'income') income += item.amount;
+                        else expense += item.amount;
+                    });
+
+                    // ใช้ toLocaleString() ให้มีลูกน้ำคั่น (เช่น 20,000)
+                    document.getElementById('money-plus').innerText = `+${income.toLocaleString()}`;
+                    document.getElementById('money-minus').innerText = `-${expense.toLocaleString()}`;
+                    document.getElementById('balance').innerText = `${(income - expense).toLocaleString()}`;
+                }
+            } catch (err) {
+                console.error('Error:', err);
+            }
+        }
+
+        // --- 2. ฟังก์ชันเพิ่มรายการ ---
+        async function addTransaction() {
+            const text = document.getElementById('text').value;
+            const amount = document.getElementById('amount').value;
+            const type = document.getElementById('type').value;
+
+            if (text.trim() === '' || amount.trim() === '') {
+                alert('กรุณากรอกข้อมูลให้ครบถ้วน');
+                return;
+            }
+
+            const transactionData = {
+                text: text,
+                amount: Number(amount),
+                type: type
+            };
+
+            try {
+                const response = await fetch('/api/transactions', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(transactionData)
                 });
 
-                // --- อัปเดต Dashboard ---
-                // ใช้ .toFixed(2) เพื่อให้มีทศนิยม 2 ตำแหน่งสวยๆ
-                document.getElementById('money-plus').innerText = `+${income.toFixed(2)} บาท`;
-                document.getElementById('money-minus').innerText = `-${expense.toFixed(2)} บาท`;
-                document.getElementById('balance').innerText = `${(income - expense).toFixed(2)} บาท`;
+                const res = await response.json();
+
+                if (res.success) {
+                    document.getElementById('text').value = '';
+                    document.getElementById('amount').value = '';
+                    getTransactions(); 
+                }
+            } catch (err) {
+                console.error('Error:', err);
+                alert('เกิดข้อผิดพลาด');
             }
-        } catch (err) {
-            console.error('Error:', err);
         }
-    }
-
-    // 2. ฟังก์ชันสำหรับบันทึกข้อมูล (เชื่อมกับปุ่มกด)
-    async function addTransaction() {
-        const text = document.getElementById('text').value;
-        const amount = document.getElementById('amount').value;
-        const type = document.getElementById('type').value;
-
-        // เช็คว่ากรอกครบไหม
-        if (text.trim() === '' || amount.trim() === '') {
-            alert('กรุณากรอกข้อมูลให้ครบถ้วน');
-            return;
-        }
-
-        const transactionData = {
-            text: text,
-            amount: Number(amount),
-            type: type
-        };
-
-        try {
-            // ส่งข้อมูลไปหลังบ้าน
-            const response = await fetch('/api/transactions', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(transactionData)
-            });
-
-            const res = await response.json();
-
-            if (res.success) {
-                alert('บันทึกสำเร็จ!');
-                // เคลียร์ช่อง
-                document.getElementById('text').value = '';
-                document.getElementById('amount').value = '';
-                
-                // โหลดข้อมูลใหม่ทันที (ตัวเลขจะอัปเดตตรงนี้)
-                getTransactions(); 
-            }
-        } catch (err) {
-            console.error('Error:', err);
-            alert('เกิดข้อผิดพลาดในการบันทึก');
-        }
-    }
-    
-    // 3. สั่งให้ทำงานทันทีเมื่อเปิดเว็บ
-    getTransactions();
-    </script>()
+        
+        getTransactions();
+    </script>
 </body>
 </html>
