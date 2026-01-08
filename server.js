@@ -69,7 +69,25 @@ app.post('/api/transactions', async (req, res) => {
         console.log("❌ บันทึกไม่สำเร็จ:", err.message);
     }
 });
+// 3. API ลบรายการ (Delete)
+app.delete('/api/transactions/:id', async (req, res) => {
+    try {
+        const transaction = await Transaction.findById(req.params.id);
 
+        if (!transaction) {
+            return res.status(404).json({ success: false, error: 'ไม่พบรายการนี้' });
+        }
+
+        await transaction.deleteOne();
+
+        return res.status(200).json({
+            success: true,
+            data: {}
+        });
+    } catch (err) {
+        return res.status(500).json({ success: false, error: 'Server Error' });
+    }
+});
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
     console.log(`🚀 Server is running on port ${PORT}`);

@@ -20,21 +20,34 @@
         p { margin: 5px 0 0; font-size: 18px; font-weight: bold; }
         .form-control { margin-bottom: 10px; }
         input, select, button { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px; font-family: 'Kanit', sans-serif; box-sizing: border-box; }
-        button { background-color: #9b59b6; color: white; border: none; cursor: pointer; font-weight: bold; margin-top: 10px; transition: 0.3s; }
-        button:hover { background-color: #8e44ad; }
+        
+        /* ปุ่มเพิ่มรายการ */
+        .btn-add { background-color: #9b59b6; color: white; border: none; cursor: pointer; font-weight: bold; margin-top: 10px; transition: 0.3s; }
+        .btn-add:hover { background-color: #8e44ad; }
+
+        /* ปุ่มลบ (ใหม่) */
+        .delete-btn {
+            cursor: pointer;
+            background-color: #e74c3c;
+            color: #fff;
+            border: 0;
+            font-size: 14px;
+            line-height: 14px;
+            padding: 5px 8px;
+            margin-left: 10px;
+            border-radius: 5px;
+            opacity: 1;
+            transition: opacity 0.3s ease;
+        }
+        .delete-btn:hover { background-color: #c0392b; }
+
         ul { list-style-type: none; padding: 0; margin-top: 20px; }
         li { background-color: #fff; border-bottom: 1px solid #eee; padding: 10px; display: flex; justify-content: space-between; align-items: center; }
         li:last-child { border-bottom: none; }
         .money-plus { color: #2ecc71; font-weight: bold; }
         .money-minus { color: #e74c3c; font-weight: bold; }
         
-        /* พื้นที่กราฟ */
-        .chart-container {
-            position: relative; 
-            height: 250px; 
-            width: 100%; 
-            margin-bottom: 20px;
-        }
+        .chart-container { position: relative; height: 250px; width: 100%; margin-bottom: 20px; }
     </style>
 </head>
 <body>
@@ -100,7 +113,7 @@
             </select>
         </div>
 
-        <button onclick="addTransaction()">เพิ่มรายการ</button>
+        <button class="btn-add" onclick="addTransaction()">เพิ่มรายการ</button>
 
         <div style="display: flex; gap: 10px; margin-top: 20px; align-items: center;">
             <select id="filter-month" onchange="getTransactions()">
@@ -130,7 +143,6 @@
     </div>
 
     <script>
-        // ตัวแปรเก็บกราฟ (เอาไว้ทำลายทิ้งก่อนวาดใหม่)
         let myChart = null;
 
         async function getTransactions() {
@@ -150,34 +162,32 @@
                     
                     let income = 0;
                     let expense = 0;
-                    
-                    // ตัวแปรสำหรับเก็บข้อมูลกราฟ (แยกตามหมวดหมู่)
                     const categoryTotals = {};
 
                     res.data.forEach(item => {
-                        // 1. สร้างรายการ List
                         const li = document.createElement('li');
                         const dateObj = new Date(item.date);
                         const dateStr = dateObj.toLocaleDateString('th-TH');
                         const sign = item.type === 'expense' ? '-' : '+';
                         const amountClass = item.type === 'expense' ? 'money-minus' : 'money-plus';
 
+                        // เพิ่มปุ่ม Delete (X) ตรงนี้
                         li.innerHTML = `
                             <span>
                                 <span style="font-size: 0.8em; color: #888;">${dateStr}</span> <br>
                                 ${item.text} <small style="color:#aaa">(${item.category})</small>
                             </span>
-                            <span class="${amountClass}">${sign}${item.amount.toLocaleString()} บาท</span>
+                            <div style="display: flex; align-items: center;">
+                                <span class="${amountClass}">${sign}${item.amount.toLocaleString()} บาท</span>
+                                <button class="delete-btn" onclick="removeTransaction('${item._id}')">x</button>
+                            </div>
                         `;
                         list.appendChild(li);
 
-                        // 2. คำนวณยอดรวม
                         if (item.type === 'income') {
                             income += item.amount;
                         } else {
                             expense += item.amount;
-                            
-                            // 3. เก็บข้อมูลลงถังหมวดหมู่ (เฉพาะรายจ่าย) เพื่อทำกราฟ
                             if (categoryTotals[item.category]) {
                                 categoryTotals[item.category] += item.amount;
                             } else {
@@ -190,7 +200,6 @@
                     document.getElementById('money-minus').innerText = `-${expense.toLocaleString()}`;
                     document.getElementById('balance').innerText = `${(income - expense).toLocaleString()}`;
 
-                    // 4. เรียกฟังก์ชันวาดกราฟ
                     renderChart(categoryTotals);
                 }
             } catch (err) {
@@ -198,25 +207,40 @@
             }
         }
 
-        // --- ฟังก์ชันวาดกราฟ (Chart.js) ---
+        // --- ฟังก์ชันลบรายการ (ใหม่) ---
+        async function removeTransaction(id) {
+            // ถามยืนยันก่อนลบ (กันมือลั่น)
+            if (confirm('คุณแน่ใจหรือไม่ที่จะลบรายการนี้?')) {
+                try {
+                    const response = await fetch(`/api/transactions/${id}`, {
+                        method: 'DELETE'
+                    });
+                    const res = await response.json();
+
+                    if (res.success) {
+                        // ถ้าลบสำเร็จ ให้โหลดข้อมูลใหม่
+                        getTransactions();
+                    } else {
+                        alert('ลบไม่สำเร็จ');
+                    }
+                } catch (err) {
+                    console.error('Error:', err);
+                    alert('เกิดข้อผิดพลาดในการลบ');
+                }
+            }
+        }
+
         function renderChart(dataObj) {
             const ctx = document.getElementById('expenseChart').getContext('2d');
-            
-            // ถ้ามีกราฟเก่าอยู่ ให้ลบทิ้งก่อน (ไม่งั้นภาพจะซ้อนกัน)
-            if (myChart) {
-                myChart.destroy();
-            }
+            if (myChart) myChart.destroy();
 
-            // เตรียมข้อมูลกราฟ
-            const labels = Object.keys(dataObj); // ชื่อหมวดหมู่
-            const data = Object.values(dataObj); // ยอดเงิน
+            const labels = Object.keys(dataObj);
+            const data = Object.values(dataObj);
 
-            // ถ้าไม่มีรายจ่ายเลย ไม่ต้องวาด
             if (labels.length === 0) return;
 
-            // สร้างกราฟวงกลมใหม่
             myChart = new Chart(ctx, {
-                type: 'doughnut', // หรือเปลี่ยนเป็น 'pie', 'bar' ก็ได้
+                type: 'doughnut',
                 data: {
                     labels: labels,
                     datasets: [{
@@ -232,13 +256,8 @@
                     responsive: true,
                     maintainAspectRatio: false,
                     plugins: {
-                        legend: {
-                            position: 'bottom'
-                        },
-                        title: {
-                            display: true,
-                            text: 'สัดส่วนรายจ่ายแบ่งตามหมวดหมู่'
-                        }
+                        legend: { position: 'bottom' },
+                        title: { display: true, text: 'สัดส่วนรายจ่ายแบ่งตามหมวดหมู่' }
                     }
                 }
             });
@@ -270,13 +289,11 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(transactionData)
                 });
-
                 const res = await response.json();
 
                 if (res.success) {
                     document.getElementById('text').value = '';
                     document.getElementById('amount').value = '';
-                    // ไม่ต้องเคลียร์วันที่ เพื่อความสะดวกในการกรอกต่อ
                     getTransactions(); 
                 }
             } catch (err) {
